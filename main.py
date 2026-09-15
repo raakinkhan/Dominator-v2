@@ -116,6 +116,7 @@ class Auctioneer:
             list[dict]: Shuffled list of length ``self.rounds``, each element
                 being ``{"type": "company"|"stock"|"death_stock"|"jackpot_companies", "earn": float}``.
         """
+        self.equiliser = self.init_cash / 20  #  20 billion was the iniitial cash we used to start with in college
 
         def generate_normal_company() -> float:
             """
@@ -127,7 +128,7 @@ class Auctioneer:
             """
             MULTIPLIER = [0.7, 0.5, 1, 1, 2, 1.5]
             base_value = (1 / 10) * self.rounds
-            return round(random.Random().choice(MULTIPLIER) * base_value, 3)
+            return round(random.Random().choice(MULTIPLIER) * base_value * self.equiliser, 3)
 
         def generate_jackpot_company() -> list:
             """
@@ -144,7 +145,7 @@ class Auctioneer:
             base_value = (1 / 10) * self.rounds
             jack_asset_companies = []
             for _ in range(5):
-                jack_asset_companies.append(round(random.Random().choice(MULTIPLIER) * base_value, 3))
+                jack_asset_companies.append(round(random.Random().choice(MULTIPLIER) * base_value * self.equiliser, 3))
 
             return jack_asset_companies
 
@@ -158,7 +159,7 @@ class Auctioneer:
             """
             MULTIPLIER = [1, 1, 1.3, 1.5]
             base_value = (1 / 3) * self.rounds
-            return round(random.Random().choice(MULTIPLIER) * base_value, 3)
+            return round(random.Random().choice(MULTIPLIER) * base_value * self.equiliser, 3)
 
         def generate_death_stock() -> float:
             """
@@ -169,7 +170,7 @@ class Auctioneer:
             """
             MULTIPLIER = [1, 1, 1, 0.8, 1.5]
             base_value = (4 / 5) * self.rounds
-            return round(random.Random().choice(MULTIPLIER) * base_value, 3)
+            return round(random.Random().choice(MULTIPLIER) * base_value * self.equiliser, 3)
 
 
         # Determine how many of each asset type to generate
