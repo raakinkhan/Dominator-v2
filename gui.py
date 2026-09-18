@@ -473,12 +473,75 @@ class AuctionApp(tk.Tk):
         ttk.Button(btns, text="\U0001F91D Propose Deal",
                    command=lambda: self._show_deal_setup(pid)).pack(side="left", padx=(0, 8))
         ttk.Button(btns, text="\U0001F6AB Fold",
-                   command=lambda: self._fold(pid)).pack(side="left")
+                   command=lambda: self._fold(pid)).pack(side="left", padx=(0, 8))
+        ttk.Button(btns, text="\U0001F4B0 Send money",
+                   command=lambda: self._send_money(pid)).pack(side="left", padx=(0, 8))
 
     def _fold(self, pid):
         self.out_bidders.add(pid)
         self._log(f"{self._name(pid)} folds.")
         self._end_turn()
+
+    def _send_money(self, pid):
+        self._clear_turn()  #  basically removes the action buttons currently
+        ttk.Label(self.turn_frame, text=f"{self._name(pid)} is transferring money - ", style="CardH2.TLabel").pack(anchor="w")
+        others = [p for p in self._active_ids() if p != pid]
+
+        row1 = ttk.Frame(self.turn_frame, style="Card.TFrame")
+        row1.pack(anchor="w", pady=4)
+        row2 = ttk.Frame(self.turn_frame, style="Card.TFrame")
+        row2.pack(anchor="w", pady=4)
+        ttk.Label(row1, text="Send money to:", style="Card.TLabel").pack(side="left")
+        combo = ttk.Combobox(row1, state="readonly", width=18,
+                              values=[self._name(p) for p in others])  #  which player to send money
+        combo.current(0)
+        combo.pack(side="left", padx=8)
+
+
+        ttk.Label(row2, text="Amount :", style="Card.TLabel").pack(side="left")
+        amount_var = tk.StringVar()
+        entry = ttk.Entry(row2, textvariable=amount_var, width=12)
+        entry.pack(side="left", padx=8)
+
+        btns = ttk.Frame(self.turn_frame, style="Card.TFrame")
+        btns.pack(anchor="w", pady=(14, 0))
+
+        error_lbl = ttk.Label(self.turn_frame, text="", style="Card.TLabel", foreground=BAD)
+        error_lbl.pack(anchor="w", pady=(8, 0))
+
+        ttk.Button(btns, text="Send", style="Accent.TButton", command=lambda: validate_and_send()).pack(side="left", padx=(0, 8))
+        ttk.Button(btns, text="Cancel",
+                   command=lambda: self._show_turn_choice(pid)).pack(side="left")
+        
+        def validate_and_send():
+            partner_name = combo.get()
+            partner_id = next(p for p in others if self._name(p) == partner_name)  #  player who ur sending money
+
+            raw = amount_var.get().strip() 
+            accounts = self.auctioneer.accounts  #  accounts and it details
+            current_person_money = accounts[pid]["cash"]
+            try:
+                amount = float(raw)  #  the amount of money to be sent
+            except ValueError:
+                error_lbl.config(text="Enter a number.")
+                return
+            if amount <= current_person_money and amount > 0:
+                error_lbl.config(text="")
+                #  sending money code here
+                accounts[pid]["cash"] -= amount
+                accounts[partner_id]["cash"] += amount
+                self._refresh_scoreboard()
+                self._show_turn_choice(pid)
+                self._log(f"{accounts[pid]["name"]} sent $ {amount} to {accounts[partner_id]["name"]}")
+            else:
+                if amount <= current_person_money:
+                    error_lbl.config(text="You don't have enough money to send")
+                else:
+                    error_lbl.config(text="Some error has occured while sending money")
+                return
+            
+                
+
 
     def _show_bid_entry(self, player_ids, cost_split, asset_split, deal_note=None):
         self._clear_turn()
